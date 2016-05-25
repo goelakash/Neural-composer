@@ -46,14 +46,15 @@ print Ytrain.shape
 # print Ytrain[:2]
 
 model = Sequential()
-model.add(LSTM(128, input_shape=(maxlen,song_matrix.shape[1])))
+model.add(LSTM(128, return_sequences=True, input_shape=(maxlen, 128)))
 model.add(Dropout(0.2))
-# model.add(LSTM(128, return_sequences=False))
-# model.add(Dropout(0.2))
+model.add(LSTM(128, return_sequences=False))
+model.add(Dropout(0.2))
 model.add(Dense(128))
-model.add(Activation('relu'))
 model.add(Dropout(0.5))
+model.add(Activation('relu'))
 model.add(Dense(128))
+model.add(Dropout(0.5))
 model.add(Activation('relu'))
 
 sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)

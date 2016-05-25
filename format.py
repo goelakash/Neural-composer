@@ -92,18 +92,18 @@ def matrix_to_midi(matrix):
     print count2
     return pattern
 
-song = midi.read_midifile("bebop.midi")
-# print len(song[0])
-matrix = midi_to_matrix("bebop.midi")
-# print len(matrix)
-pattern = matrix_to_midi(matrix)
-# print len(pattern[0])
+# song = midi.read_midifile("bebop.midi")
+# # print len(song[0])
+# matrix = midi_to_matrix("bebop.midi")
+# # print len(matrix)
+# pattern = matrix_to_midi(matrix)
+# # print len(pattern[0])
 
-for (e1,e2) in zip(song[0],pattern[0]):
-    if type(e1)==type(e2):
-        print e1
-        print e2
-    else:
-        print e1
-        print e2
-        break
+# for (e1,e2) in zip(song[0],pattern[0]):
+#     if type(e1)==type(e2):
+#         print e1
+#         print e2
+#     else:
+#         print e1
+#         print e2
+#         break

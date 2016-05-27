@@ -6,22 +6,30 @@ from keras.layers.core import Dense, Activation, Dropout
 from keras.optimizers import SGD, RMSprop
 import time
 import numpy as np
-
+import os
 from format import *
 
-SONG_NAME = "bebop.midi"
-song_matrix = np.asarray(midi_to_matrix(SONG_NAME))
-
-maxlen = 50
-states = np.asarray([[x[0] for x in row] for row in song_matrix])
+song_list = []
+for r,sd,fl in os.walk("music"):
+	song_list = fl
 
 sentences = []
 next_chars = []
-step = 3
-for i in range(0, song_matrix.shape[0] - maxlen, step):
-    sentences.append(states[i: i + maxlen])
-    next_chars.append(states[i + maxlen])
-print('nb sequences:', len(sentences))
+song_matrix_list = []
+
+for SONG_NAME in song_list:
+	print "music/"+SONG_NAME
+	song_matrix_list.extend(midi_to_matrix("music/"+SONG_NAME))
+
+for song_matrix in song_matrix_list:
+	maxlen = 50
+	states = song_matrix
+
+	step = 10
+	for i in range(0, song_matrix.shape[0] - maxlen, step):
+	    sentences.append(states[i: i + maxlen])
+	    next_chars.append(states[i + maxlen])
+	print('nb sequences:', len(sentences))
 
 
 X = np.zeros((len(sentences), maxlen, song_matrix.shape[1]))
@@ -45,56 +53,53 @@ print Xtrain.shape
 print Ytrain.shape
 
 starters = []
-for i in range(0,5):
-	starters.append(X[i*1000])
+for i in range(0,3):
+	starters.append(X[i*10000])
 
 print X[0].shape
-# print Xtrain[:2]
-# print Ytrain[:2]
 
-model = Sequential()
-model.add(LSTM(128, return_sequences=True, input_shape=(maxlen, 128)))
-model.add(Dropout(0.2))
-model.add(LSTM(128, return_sequences=False))
-model.add(Dropout(0.2))
-model.add(Dense(128))
-model.add(Dropout(0.5))
-model.add(Activation('relu'))
-model.add(Dense(128))
-model.add(Dropout(0.5))
-model.add(Activation('relu'))
+# model = Sequential()
+# model.add(LSTM(512, return_sequences=True, input_shape=(maxlen, 128)))
+# model.add(Dropout(0.2))
+# model.add(LSTM(512, return_sequences=False))
+# model.add(Dropout(0.2))
+# model.add(Dense(256))
+# model.add(Dropout(0.5))
+# model.add(Activation('relu'))
+# model.add(Dense(128))
+# model.add(Dropout(0.5))
+# model.add(Activation('relu'))
 
-sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+# sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
 
-print "Compiling"
-start = time.time()
-model.compile(loss='mean_squared_error', optimizer=sgd)
-elapsed = time.time() - start
-print elapsed/60, ' and ', elapsed%60
+# print "Compiling"
+# start = time.time()
+# model.compile(loss='mean_squared_error', optimizer=sgd)
+# elapsed = time.time() - start
+# print int(elapsed/60), 'minutes and ', elapsed%60, " seconds"
 
-nb = 5
+import cPickle as pickle
+model = pickle.load(open("untraimed_model_512_512_256_128__nb_eq_10.p","rb"))
+
+nb = 10
 model.fit(Xtrain, Ytrain, nb_epoch=nb)
 print model.evaluate(Xtest, Ytest)
 
+results = []
 gen_songs = []
 
-for st in starters:
-    res = st              
-    pos = 0
-    for i in range(0,10000):
-        pred = model.predict(np.asarray([res[pos:pos+maxlen]]))
-        for i in range(0,len(pred[0])):
-        	pred[0][i] = int(pred[0][i])
-        	if pred[0][i]<40:
-        		pred[0][i]=0
 
+for st in starters:
+    res = st
+    pos = 0
+    for i in range(0,50000):
+        pred = model.predict(np.asarray([res[pos:pos+maxlen]]))
         res = np.vstack((res,pred))
         pos += 1
-
-    #result is a state matrix, so convert
     print res.shape
-    new_song = matrix_to_midi(res)
-    gen_songs.append(copy(new_song))
+    results.append(copy(res))
 
-for i in range(0,len(gen_songs)):
-	midi.write_midifile("gensong_"+str(i)+".mid",gen_songs[i])
+for i in range(0,len(results)):
+    new_song = matrix_to_midi(results[i].astype('int64',copy=False))
+    print new_song
+    midi.write_midifile("gensong_"+str(i)+".mid",new_song)

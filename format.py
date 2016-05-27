@@ -3,44 +3,45 @@ import midi
 from copy import copy
 
 def midi_to_matrix(filename):
+    # print filename
     pattern = midi.read_midifile(filename)
-    state = [(0,0) for _ in range(0,128)]
-    state_matrix = []
-    current_time = 0
-    count1 = 0
-    count2 = 0
+    # print pattern
+    state_matrix_list = []
+    for track in pattern:
+        state = [0 for _ in range(0,128)]
+        state_matrix = []
+        state_matrix.append(copy(state))
+        current_time = 0
+        count1 = 0
+        count2 = 0
 
-    for evt in pattern[0]:
+        for evt in track:
 
-        if isinstance(evt, midi.EndOfTrackEvent):
-            break
+            if isinstance(evt, midi.EndOfTrackEvent):
+                break
 
-        elif isinstance(evt, midi.NoteEvent):
-            current_time = evt.tick
+            elif isinstance(evt, midi.NoteEvent):
+                current_time = evt.tick
 
-            if current_time>0:      #crap! fill the time gap with time slices of note array
-                ''' Append state because
-                non-zero interval encountered '''
-                state_matrix.append(copy(state))
-                state = [(note[1],note[1]) for note in state]
+                if current_time>0:      #crap! fill the time gap with time slices of note array
+                    for i in range(0,current_time):
+                        state_matrix.append(copy(state))
 
-                for i in range(0,current_time-1):
-                    state_matrix.append(copy(state))
+                if isinstance(evt, midi.NoteOffEvent) or evt.data[1]==0:
+                    state[evt.pitch] = 0
+                    count2 += 1
+                else:
+                    state[evt.pitch] = evt.data[1]
+                    count1 += 1
 
-            if isinstance(evt, midi.NoteOffEvent) or evt.data[1]==0:
-                # if state[evt.pitch][1]>0:
-                state[evt.pitch] = (state[evt.pitch][1], 0)
-                count2 += 1
             else:
-                state[evt.pitch] = (state[evt.pitch][1], evt.data[1])
-                count1 += 1
-
-        else:
-            continue
-    state_matrix.append(copy(state))
+                continue
+        state_matrix.append(copy(state))
+        if len(state_matrix)>10:
+            state_matrix_list.append(np.asarray(copy(state_matrix)))
     print count1
     print count2
-    return state_matrix
+    return state_matrix_list
 
 
 def matrix_to_midi(matrix):
@@ -58,26 +59,23 @@ def matrix_to_midi(matrix):
     for evt in pre_events:
         pattern[0].append(evt)
 
-    print pattern
+    # print pattern
     tick_count = 0
     count1 = 0
     count2 = 0
 
-    for row in matrix:
+    for i in range(1,len(matrix)):
 
         flag = 0
+        for j in range(0,len(matrix[i])):
 
-        for i in range(len(row)):
-
-            if row[i][0] != row[i][1]:
+            if matrix[i][j] != matrix[i-1][j]:
                 # rows are correctly charanterised as being interesting or not
-
                 flag = 1
-
-                if row[i][0] == 0:
+                if matrix[i][j] != 0:
                     count1 += 1
-                    pattern[0].append(midi.NoteOnEvent(tick=tick_count, channel=0, data=[i, row[i][1]]))
-                elif row[i][1] == 0:
+                    pattern[0].append(midi.NoteOnEvent(tick=tick_count, channel=0, data=[j, int(matrix[i][j]) ]))
+                elif matrix[i][j] == 0:
                     count2 += 1
                     pattern[0].append(midi.NoteOffEvent(tick=tick_count, channel=0, data=[i, 0]))
 
@@ -92,18 +90,18 @@ def matrix_to_midi(matrix):
     print count2
     return pattern
 
-# song = midi.read_midifile("bebop.midi")
-# # print len(song[0])
-# matrix = midi_to_matrix("bebop.midi")
-# # print len(matrix)
-# pattern = matrix_to_midi(matrix)
-# # print len(pattern[0])
+song = midi.read_midifile("bebop.midi")
+# print len(song[0])
+matrix = midi_to_matrix("bebop.midi")
+# print len(matrix)
+pattern = matrix_to_midi(matrix)
+# print len(pattern[0])
 
-# for (e1,e2) in zip(song[0],pattern[0]):
-#     if type(e1)==type(e2):
-#         print e1
-#         print e2
-#     else:
-#         print e1
-#         print e2
-#         break
+for (e1,e2) in zip(song[0],pattern[0]):
+    if type(e1)==type(e2):
+        print e1
+        print e2
+    else:
+        print e1
+        print e2
+        break

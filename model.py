@@ -17,7 +17,7 @@ states = np.asarray([[x[0] for x in row] for row in song_matrix])
 
 sentences = []
 next_chars = []
-step = 5
+step = 3
 for i in range(0, song_matrix.shape[0] - maxlen, step):
     sentences.append(states[i: i + maxlen])
     next_chars.append(states[i + maxlen])
@@ -44,6 +44,11 @@ Ytest = Y[n:]
 print Xtrain.shape
 print Ytrain.shape
 
+starters = []
+for i in range(0,5):
+	starters.append(X[i*1000])
+
+print X[0].shape
 # print Xtrain[:2]
 # print Ytrain[:2]
 
@@ -67,6 +72,29 @@ model.compile(loss='mean_squared_error', optimizer=sgd)
 elapsed = time.time() - start
 print elapsed/60, ' and ', elapsed%60
 
-nb = 10
+nb = 5
 model.fit(Xtrain, Ytrain, nb_epoch=nb)
 print model.evaluate(Xtest, Ytest)
+
+gen_songs = []
+
+for st in starters:
+    res = st              
+    pos = 0
+    for i in range(0,10000):
+        pred = model.predict(np.asarray([res[pos:pos+maxlen]]))
+        for i in range(0,len(pred[0])):
+        	pred[0][i] = int(pred[0][i])
+        	if pred[0][i]<40:
+        		pred[0][i]=0
+
+        res = np.vstack((res,pred))
+        pos += 1
+
+    #result is a state matrix, so convert
+    print res.shape
+    new_song = matrix_to_midi(res)
+    gen_songs.append(copy(new_song))
+
+for i in range(0,len(gen_songs)):
+	midi.write_midifile("gensong_"+str(i)+".mid",gen_songs[i])

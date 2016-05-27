@@ -51,8 +51,8 @@ def matrix_to_midi(matrix):
         midi.SetTempoEvent(tick=0, data=[4, 147, 224]),
         midi.KeySignatureEvent(tick=0, data=[0, 0]),
         midi.TimeSignatureEvent(tick=0, data=[4, 2, 48, 8]),
-        midi.TrackNameEvent(tick=0, text='Created by dse2abc.m on 25-Feb-2002', data=[67, 114, 101, 97, 116, 101, 100, 32, 98, 121, 32, 100, 115, 101, 50, 97, 98, 99, 46, 109, 32, 111, 110, 32, 50, 53, 45, 70, 101, 98, 45, 50, 48, 48, 50]),
-        midi.TextMetaEvent(tick=0, text='N:Douglas Eck', data=[78, 58, 68, 111, 117, 103, 108, 97, 115, 32, 69, 99, 107])
+        midi.TrackNameEvent(tick=0, text='Sample song', data=[67, 114, 101, 97, 116, 101, 100, 32, 98, 121, 32, 100, 115, 101, 50, 97, 98, 99, 46, 109, 32, 111, 110, 32, 50, 53, 45, 70, 101, 98, 45, 50, 48, 48, 50]),
+        midi.TextMetaEvent(tick=0, text='major project', data=[78, 58, 68, 111, 117, 103, 108, 97, 115, 32, 69, 99, 107])
         ]
 
     for evt in pre_events:

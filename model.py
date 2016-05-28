@@ -81,9 +81,13 @@ print X[0].shape
 import cPickle as pickle
 model = pickle.load(open("untraimed_model_512_512_256_128__nb_eq_10.p","rb"))
 
-nb = 10
+nb = 100
 model.fit(Xtrain, Ytrain, nb_epoch=nb)
 print model.evaluate(Xtest, Ytest)
+
+import sys
+sys.setrecursionlimit(10000)
+pickle.dump(model,open("trained_model.p","wb"),protocol=pickle.HIGHEST_PROTOCOL)
 
 results = []
 gen_songs = []
